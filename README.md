@@ -35,7 +35,7 @@ The `gurobi` config option is required to use the Gurobi solvers. The `no_fs` op
 
 An example of the optimality code for a 3-bus network for various risk-parameters, and the effect of changing the number of scenarios on solution quality are shown below.
 
-![Effect of risk](images/case3_gamma_objtime.png) ![Variance](images/case3_variance.png)
+<img src="images/case3_gamma_objtime.png" height="50%" /><img src="images/case3_variance.png" height="50%" />
 
 ## Acceptability
 
