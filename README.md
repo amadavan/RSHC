@@ -59,7 +59,7 @@ The available options for the acceptability code are:
 
 An example of the acceptability test on a 3-bus power network is shown below.
 
-![3-bus Acceptability](/images/case3_acceptability.mp4)
+https://user-images.githubusercontent.com/4148233/163688222-7af3af99-1379-4558-9328-42ef44cd560b.mp4
 
 ## References
 In using this work, we ask that you cite the following paper.
