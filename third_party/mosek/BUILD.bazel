@@ -1,0 +1,38 @@
+licenses(["notice"])  # 3-Clause BSD
+
+cc_library(
+    name = "mosek_binary_blob",
+    visibility = ["//visibility:public"],
+    deps = select({
+        "@rshc//:linux_x86_64": [
+            "@mosek_linux//:mosek_headers",
+            "@mosek_linux//:mosek_lib_linux",
+        ],
+        "@rshc//:windows": [
+            "@mosek_windows//:mosek_headers",
+            "@mosek_windows//:mosek_lib_windows",
+        ],
+        "@rshc//:darwin": [
+            "@mosek_darwin//:mosek_headers",
+            "@mosek_darwin//:mosek_lib_darwin",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_library(
+    name = "fusion_cxx",
+    visibility = ["//visibility:public"],
+    deps = select({
+        "@rshc//:linux_x86_64": [
+            "@mosek_linux//:fusion_cxx",
+        ],
+        "@rshc//:windows": [
+            "@mosek_windows//:fusion_cxx",
+        ],
+        "@rshc//:darwin": [
+            "@mosek_darwin//:fusion_cxx",
+        ],
+        "//conditions:default": [],
+    }),
+)

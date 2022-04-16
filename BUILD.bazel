@@ -1,0 +1,116 @@
+load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
+load("@com_grail_bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
+load("@rshc//third_party/gurobi:build_defs.bzl", "gurobi_deps", "if_gurobi")
+
+exports_files(["LICENSE"])
+
+# Configuration variables
+config_setting(
+    name = "darwin",
+    values = {"cpu": "darwin"},
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "windows",
+    values = {"cpu": "x64_windows"},
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "linux_x86_64",
+    values = {"cpu": "k8"},
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "no_fs",
+    define_values = {
+        "no_fs": "true",
+    },
+)
+
+DATA_FILES = [
+    "data/case3_der.csv",
+    "data/case3_dist.m",
+    "data/case56_der.csv",
+    "data/case56_sce.m",
+    "data/load_data.csv",
+    "data/pv_data.csv",
+    "data/load_data_random.csv",
+    "data/pv_data_random.csv",
+    "data/psis.csv",
+    "data/psis_case56.csv"
+]
+
+cc_binary(
+    name = "optimality",
+    srcs = [
+        "src/optimality/optimality.cpp",
+        "src/optimality/mosek_model.cpp",
+        "src/model.cpp",
+    ] + if_gurobi([
+        "src/optimality/gurobi_model.cpp"
+    ]),
+    includes = ["include"],
+    data = DATA_FILES,
+    defines = if_gurobi(["ENABLE_GUROBI"])+ select({
+        "no_fs": [],
+        "//conditions:default": ["ENABLE_FS"],
+    }),
+    linkstatic = True,
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_tools//tools/cpp/runfiles",
+        "@cxxopts//:cxxopts",
+        "@eigen//:eigen",
+        "@rshc//third_party/mosek:fusion_cxx",
+    ] + gurobi_deps() + select({
+        "no_fs": ["@phasor-nofs//:phasor"],
+        "//conditions:default": ["@phasor//:phasor"],
+    }),
+)
+
+cc_binary(
+    name = "acceptability",
+    srcs = [
+        "src/acceptability/acceptability.cpp",
+        "src/acceptability/acceptability_check.cpp",
+        "src/acceptability/unacceptability_check.cpp",
+        "src/acceptability/assessor.cpp",
+        "src/model.cpp",
+    ] + if_gurobi([]),
+    data = DATA_FILES,
+    defines = ["H5_USE_EIGEN"] + if_gurobi(["ENABLE_GUROBI"]) + select({
+        "no_fs": [],
+        "//conditions:default": ["ENABLE_FS"],
+    }),
+    includes = ["include"],
+    linkstatic = True,
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_tools//tools/cpp/runfiles",
+        "@cxxopts//:cxxopts",
+        "@eigen//:eigen",
+        "@rshc//third_party/mosek:fusion_cxx",
+        "@hdf5//:hdf5",
+        "@highfive//:h5",
+    ] + gurobi_deps() + select({
+        "no_fs": ["@phasor-nofs//:phasor"],
+        "//conditions:default": ["@phasor//:phasor"],
+    }),
+)
+
+compilation_database(
+    name = "compdb",
+    # OUTPUT_BASE is a dynamic value that will vary for each user workspace.
+    # If you would like your build outputs to be the same across users, then
+    # skip supplying this value, and substitute the default constant value
+    # "__OUTPUT_BASE__" through an external tool like `sed` or `jq` (see
+    # below shell commands for usage).
+    output_base = OUTPUT_BASE,
+    targets = [
+        "//:optimality",
+        "//:acceptability"
+    ],
+)

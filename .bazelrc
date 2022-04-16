@@ -1,0 +1,15 @@
+build --compilation_mode=opt
+
+build --define=PREFIX=/usr
+build --define=LIBDIR=$(PREFIX)/lib
+build --define=INCLUDEDIR=$(PREFIX)/include
+
+build --spawn_strategy=standalone
+build --strategy=Genrule=standalone
+
+build --cxxopt=-std=c++17
+
+build:gurobi --define=enable_gurobi=true
+build:no_fs --define=no_fs=true
+
+build --output_filter='^//third_party/:'

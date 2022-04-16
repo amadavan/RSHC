@@ -1,0 +1,29 @@
+licenses(["notice"])  # 3-Clause BSD
+
+config_setting(
+    name = "enable_gurobi",
+    define_values = {
+        "enable_gurobi": "true",
+    },
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "binary_blob",
+    deps = select({
+        "@rshc//:linux_x86_64": [
+            "@gurobi//:gurobi_headers",
+            "@gurobi//:gurobi_libs_linux",
+        ],
+        "@rshc//:darwin": [
+            "@gurobi//:gurobi_headers",
+            "@gurobi//:gurobi_libs_darwin",
+        ],
+        "@rshc//:windows": [
+            "@gurobi//:gurobi_headers",
+            "@gurobi//:gurobi_libs_windows",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
