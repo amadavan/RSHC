@@ -6,7 +6,7 @@ genrule(
   name = "configure_hdf5",
   srcs = glob(["**/*"], exclude=["src/H5pubconf.h", "src/libhdf5.settings", "src/libsettings.c"]),
   outs = ["src/H5pubconf.h", "src/libhdf5.settings"],
-  cmd = "pushd external/hdf5/; workdir=$$(mktemp -d -t tmp.XXXXXXXXXX); cp -r * $$workdir; pushd $$workdir; ./configure --enable-build-mode=production --disable-hl --with-zlib --with-szlib; popd; popd; cp $$workdir/src/H5pubconf.h $$workdir/src/libhdf5.settings $(@D)/src; rm -rf $$workdir;",
+  cmd = "pushd external/hdf5/; workdir=$$(mktemp -d -t tmp.XXXXXXXXXX); cp -r * $$workdir; pushd $$workdir; ./configure --enable-build-mode=production --disable-hl --with-zlib; popd; popd; cp $$workdir/src/H5pubconf.h $$workdir/src/libhdf5.settings $(@D)/src; rm -rf $$workdir;",
   tools = ["configure"],
   message = "Configuring HDF5",
   visibility = ["//visibility:private"],
@@ -56,7 +56,7 @@ cc_library(
   hdrs = glob(["src/*.h"], exclude=["src/H5pubconf.h"]) + [":configure_hdf5"],
   linkopts = ["-ldl"],
   includes = ["src"],
-  deps = ["@zlib//:zlib", "@szip//:szip"],
+  deps = ["@zlib//:zlib"],
   visibility = ["//visibility:public"],
 )
 

@@ -23,10 +23,10 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 # Rule repository
 http_archive(
    name = "rules_foreign_cc",
-   strip_prefix = "rules_foreign_cc-0.7.1",
-   sha256 = "bcd0c5f46a49b85b384906daae41d277b3dc0ff27c7c752cc51e43048a58ec83",
+   strip_prefix = "rules_foreign_cc-0.9.0",
+   sha256 = "2a4d07cd64b0719b39a7c12218a3e507672b82a97b98c6a89d38565894cf7c51",
    urls = [
-       "https://github.com/bazelbuild/rules_foreign_cc/archive/0.7.1.tar.gz",
+       "https://github.com/bazelbuild/rules_foreign_cc/archive/0.9.0.tar.gz",
        ]
 )
 
@@ -75,21 +75,20 @@ rshc_http_archive(
     name = "hdf5",
     build_file = "@rshc//third_party:hdf5.BUILD",
     system_build_file = "@rshc//third_party/systemlibs:hdf5.BUILD",
-    sha256 = "6d4ce8bf902a97b050f6f491f4268634e252a63dadd6656a1a9be5b7b7726fa8",
-    strip_prefix = "hdf5-1.10.5",
+    sha256 = "1a88bbe36213a2cea0c8397201a459643e7155c9dc91e062675b3fb07ee38afe",
+    strip_prefix = "hdf5-1.12.2",
     urls = [
-        "https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.5/src/hdf5-1.10.5.tar.gz",
+        "https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.2/src/hdf5-1.12.2.tar.bz2",
         ]
 )
 rshc_http_archive(
     name = "zlib",
     build_file = "@rshc//third_party:zlib.BUILD",
     system_build_file = "@rshc//third_party/systemlibs:zlib.BUILD",
-    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
-    strip_prefix = "zlib-1.2.11",
+    sha256 = "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30",
+    strip_prefix = "zlib-1.2.13",
     urls = [
-        "http://mirror.tensorflow.org/zlib.net/zlib-1.2.11.tar.gz",
-        "https://zlib.net/zlib-1.2.11.tar.gz",
+        "https://zlib.net/zlib-1.2.13.tar.gz",
     ],
 )
 
@@ -107,10 +106,10 @@ rshc_http_archive(
 http_archive(
     name = "highfive",
     build_file = "@rshc//third_party:highfive.BUILD",
-    sha256 = "41728a1204bdfcdcef8cbc3ddffe5d744c5331434ce3dcef35614b831234fcd7",
-    strip_prefix = "HighFive-2.3.1",
+    sha256 = "6826471ef5c645ebf947d29574b302991525a8a8ff1ef687aba7311d9a0ea36f",
+    strip_prefix = "HighFive-2.4.1",
     urls = [
-        "https://github.com/BlueBrain/HighFive/archive/refs/tags/v2.3.1.tar.gz"
+        "https://github.com/BlueBrain/HighFive/archive/refs/tags/v2.4.1.tar.gz"
     ]
 )
 

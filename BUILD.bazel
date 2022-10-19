@@ -81,7 +81,7 @@ cc_binary(
         "src/model.cpp",
     ] + if_gurobi([]),
     data = DATA_FILES,
-    defines = ["H5_USE_EIGEN"] + if_gurobi(["ENABLE_GUROBI"]) + select({
+    defines = ["HIGHFIVE_USE_EIGEN", "HIGHFIVE_USE_BOOST=OFF"] + if_gurobi(["ENABLE_GUROBI"]) + select({
         "no_fs": [],
         "//conditions:default": ["ENABLE_FS"],
     }),
@@ -93,7 +93,6 @@ cc_binary(
         "@cxxopts//:cxxopts",
         "@eigen//:eigen",
         "@rshc//third_party/mosek:fusion_cxx",
-        "@hdf5//:hdf5",
         "@highfive//:h5",
     ] + gurobi_deps() + select({
         "no_fs": ["@phasor-nofs//:phasor"],
