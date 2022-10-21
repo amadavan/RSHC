@@ -100,6 +100,28 @@ cc_binary(
     }),
 )
 
+cc_binary(
+    name = "evaluation",
+    srcs = [
+        "src/evaluation/evaluation.cpp",
+        "src/evaluation/mosek_evaluation.cpp",
+        "src/model.cpp"
+    ] + if_gurobi([]),
+    data = DATA_FILES,
+    includes = ["include"],
+    linkstatic = True,
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_tools//tools/cpp/runfiles",
+        "@cxxopts//:cxxopts",
+        "@eigen//:eigen",
+        "@rshc//third_party/mosek:fusion_cxx",
+    ] + gurobi_deps() + select({
+        "no_fs": ["@phasor-nofs//:phasor"],
+        "//conditions:default": ["@phasor//:phasor"],
+    }),
+)
+
 compilation_database(
     name = "compdb",
     # OUTPUT_BASE is a dynamic value that will vary for each user workspace.
@@ -110,6 +132,7 @@ compilation_database(
     output_base = OUTPUT_BASE,
     targets = [
         "//:optimality",
-        "//:acceptability"
+        "//:acceptability",
+        "//:evaluation",
     ],
 )
