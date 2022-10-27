@@ -35,13 +35,10 @@ rshc::eval::MosekEvaluation::MosekEvaluation(const Model &model,
   ndarray_ptr_t psi_max = monty::new_array_ptr(network_.der_cap);
 
   // Note: we ignore voltage of feeder bus in CVaR constraints
-  // std::vector<double> neg_w_min(network_.wl.begin(), network_.wl.end() - 1);
-  // std::for_each(neg_w_min.begin(), neg_w_min.end(), [](double &d) { d *= -1;
-  // }); ndarray_ptr_t n_w_min = monty::new_array_ptr(neg_w_min);
   ndarray_ptr_t w_min = monty::new_array_ptr(
-      std::vector<double>(network_.wl.begin(), network_.wl.end() - 1));
+      std::vector<double>(network_.wl.begin(), network_.wl.end()));
   ndarray_ptr_t w_max = monty::new_array_ptr(
-      std::vector<double>(network_.wu.begin(), network_.wu.end() - 1));
+      std::vector<double>(network_.wu.begin(), network_.wu.end()));
   ndarray_ptr_t s_lim = monty::new_array_ptr(network_.S2);
 
   ndarray_ptr_t r = monty::new_array_ptr(network_.r);
@@ -103,8 +100,8 @@ rshc::eval::MosekEvaluation::MosekEvaluation(const Model &model,
   psi_ = model_->parameter(n_d_);
 
   alpha_ = model_->parameter(n_d_);
-  d_ = model_->parameter(n_b_);
-  e_ = model_->parameter(n_b_);
+  d_ = model_->parameter(n_l_);
+  e_ = model_->parameter(n_l_);
 
   P_ = model_->variable(n_l_, Domain::unbounded());
   Q_ = model_->variable(n_l_, Domain::unbounded());
@@ -124,15 +121,16 @@ rshc::eval::MosekEvaluation::MosekEvaluation(const Model &model,
   // Constraints
   v_ref_ = model_->constraint(w_->index(n_b_ - 1), Domain::equalsTo(1.));
   pb_p_ = model_->constraint(
-      Expr::sub(Expr::mul(der_loc, Expr::mulElm((Expression::t) alpha_, psi_)),
+      Expr::sub(Expr::mul(der_loc, Expr::mulElm((Expression::t)alpha_, psi_)),
                 Expr::add(Expr::mul(pi_adj->transpose(), P_),
                           Expr::add(Expr::mulElm(r, l_), d_))),
       Domain::equalsTo(0.));
   pb_q_ = model_->constraint(
-      Expr::sub(
-          Expr::mul(der_loc, Expr::mulElm(eta, Expr::mulElm((Expression::t) alpha_, psi_))),
-          Expr::add(Expr::mul(pi_adj->transpose(), Q_),
-                    Expr::add(Expr::mulElm(x, l_), e_))),
+      Expr::sub(Expr::mul(der_loc,
+                          Expr::mulElm(
+                              eta, Expr::mulElm((Expression::t)alpha_, psi_))),
+                Expr::add(Expr::mul(pi_adj->transpose(), Q_),
+                          Expr::add(Expr::mulElm(x, l_), e_))),
       Domain::equalsTo(0.));
   v_b_ = model_->constraint(
       Expr::sub(
@@ -143,8 +141,7 @@ rshc::eval::MosekEvaluation::MosekEvaluation(const Model &model,
   std::shared_ptr<monty::ndarray<Expression::t, 1>> flow_p =
       monty::new_array_ptr<Expression::t, 1>(
           {Expr::mul(0.5, Expr::mul(adj_pos, w_)), l_, P_, Q_});
-  flow_ =
-      model_->constraint(Expr::hstack(flow_p), Domain::inRotatedQCone());
+  flow_ = model_->constraint(Expr::hstack(flow_p), Domain::inRotatedQCone());
 
   v_l_ =
       model_->constraint(Expr::add(w_, wl_slack_), Domain::greaterThan(w_min));
@@ -155,12 +152,14 @@ rshc::eval::MosekEvaluation::MosekEvaluation(const Model &model,
   f_ = model_->constraint(Expr::hstack(f_p), Domain::inRotatedQCone());
 }
 
-rshc::eval::MosekEvaluation::~MosekEvaluation() {}
+rshc::eval::MosekEvaluation::~MosekEvaluation() { model_->dispose(); }
 
-rshc::eval::Statistics rshc::eval::MosekEvaluation::evaluate(const std::vector<double> &psi) {
+rshc::eval::Statistics rshc::eval::MosekEvaluation::evaluate(
+    const std::vector<double> &psi) {
   psi_->setValue(monty::new_array_ptr(psi));
 
   Statistics stats;
+  stats.P_joint = 0;
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> w =
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
@@ -169,7 +168,10 @@ rshc::eval::Statistics rshc::eval::MosekEvaluation::evaluate(const std::vector<d
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                     Eigen::RowMajor>::Zero(n_l_, n_k_);
 
+  util::ProgressBar progressBar(n_k_);
   for (size_t k = 0; k < n_k_; ++k) {
+    progressBar.setValue(k);
+    
     const Scenario &scenario = network_.scenarios[k];
     alpha_->setValue(monty::new_array_ptr(scenario.alpha));
     d_->setValue(monty::new_array_ptr(scenario.d));
@@ -184,7 +186,7 @@ rshc::eval::Statistics rshc::eval::MosekEvaluation::evaluate(const std::vector<d
 
     if (model_->primalObjValue() != 0) {
       // Problem was infeasible
-      stats.P_joint += 1./k;
+      stats.P_joint += 1. / k;
     }
 
     ndarray_ptr_t w_val = w_->level();
@@ -197,9 +199,10 @@ rshc::eval::Statistics rshc::eval::MosekEvaluation::evaluate(const std::vector<d
     w.col(k) = Eigen::Map<Eigen::VectorXd>(w_val->begin(), n_b_);
     S2.col(k) = P.square() + Q.square();
   }
+  progressBar.finalize();
 
-  for (auto row: w.rowwise()) std::sort(row.begin(), row.end());
-  for (auto row: S2.rowwise()) std::sort(row.begin(), row.end());
+  for (auto row : w.rowwise()) std::sort(row.begin(), row.end());
+  for (auto row : S2.rowwise()) std::sort(row.begin(), row.end());
 
   // Identify violation indices
   std::vector<size_t> wl_ind(n_b_, 0);
@@ -231,17 +234,34 @@ rshc::eval::Statistics rshc::eval::MosekEvaluation::evaluate(const std::vector<d
   std::for_each(stats.P_f.begin(), stats.P_f.end(),
                 [this](double &a) { a /= this->n_k_; });
 
-  // CVaR of violation
+  // CVaR of limits
   // Ignore the component of the expectation between extremal values (i.e.
   // immediately less than/greater than; results in <2% error)
   size_t nu_idx = static_cast<size_t>((1 - network_.nu) * n_k_);
   size_t gamma_idx = static_cast<size_t>((1 - network_.gamma) * n_k_);
 
-  stats.CVaR_wl = util::getEigenSTL<double>(w.leftCols(nu_idx).rowwise().mean());
-  stats.CVaR_wu = util::getEigenSTL<double>(w.rightCols(nu_idx).rowwise().mean());
-  stats.CVaR_f = util::getEigenSTL<double>(S2.rightCols(gamma_idx).rowwise().mean());
+  stats.CVaR_wl =
+      util::getEigenSTL<double>(w.leftCols(nu_idx).rowwise().mean());
+  stats.CVaR_wu =
+      util::getEigenSTL<double>(w.rightCols(nu_idx).rowwise().mean());
+  stats.CVaR_f =
+      util::getEigenSTL<double>(S2.rightCols(gamma_idx).rowwise().mean());
 
-  // Worst case
+  // Expected violation
+  stats.E_wl = std::vector<double>(n_b_, 0);
+  stats.E_wu = std::vector<double>(n_b_, 0);
+  stats.E_f = std::vector<double>(n_l_, 0);
+
+  for (size_t b = 0; b < n_b_; ++b) {
+    if (wl_ind[b] < n_k_ - 1) stats.E_wl[b] = w.row(b).head(wl_ind[b]).mean();
+    if (wu_ind[b] > 0) stats.E_wu[b] = w.row(b).tail(wu_ind[b]).mean();
+  }
+
+  for (size_t l = 0; l < n_l_; ++l) {
+    stats.E_f[l] = S2.row(l).tail(f_ind[l]).mean();
+  }
+
+  // Worst case violations
   stats.max_wl = util::getEigenSTL<double>(w.col(0));
   stats.max_wu = util::getEigenSTL<double>(w.col(n_k_ - 1));
   stats.max_f = util::getEigenSTL<double>(S2.col(n_k_ - 1));
