@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
   bool randomize = result["randomize"].as<bool>();
   bool perunit = result["unit"].as<bool>();
   double tolerance = result["tolerance"].as<double>();
-  double scale = result["scale"].as<double>();
+  // double scale = result["scale"].as<double>();
   std::string solver = result["solver"].as<std::string>();
   bool verbose = result["verbose"].as<bool>();
   std::vector<double> hosting_capacity = result["capacity"].as<std::vector<double>>();
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
   rshc::SolverOptions opts;
   opts.tolerance = tolerance;
-  opts.obj_scale = scale;
+  opts.obj_scale = 1;
   opts.verbose = verbose;
   opts.save = verbose;
 
@@ -91,6 +91,7 @@ int main(int argc, char **argv) {
 
   rshc::eval::MosekEvaluation eval(model, opts);
   rshc::eval::Statistics stats = eval.evaluate(hosting_capacity);
+  std::cout << stats << std::endl;
 
   return 0;
 }
