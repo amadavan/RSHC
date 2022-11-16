@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
       ("p,pv", "Solar PV data", cxxopts::value<std::string>()->default_value("pv_data.csv"))
       ("v,nu", "Voltage limit CVaR parameter", cxxopts::value<double>()->default_value("0"))
       ("g,gamma", "Line flow capacity CVaR parameter", cxxopts::value<double>()->default_value("0"))
-      ("k,scenarios", "Scenarios", cxxopts::value<int>()->default_value("0"))
+      ("k,scenarios", "Scenarios", cxxopts::value<std::vector<int>>())
       ("r,randomize", "Randomize scenarios", cxxopts::value<bool>()->default_value("false"))
       ("u,unit", "Per-unit rescaling of line parameters", cxxopts::value<bool>()->default_value("false"))
       ("t,tolerance", "Tolerance", cxxopts::value<double>()->default_value("1e-8"))
@@ -48,8 +48,7 @@ int main(int argc, char **argv) {
   std::string pvstring = result["pv"].as<std::string>();
   double nu = result["nu"].as<double>();
   double gamma = result["gamma"].as<double>();
-  int scenarios = result["scenarios"].as<int>();
-  bool randomize = result["randomize"].as<bool>();
+  std::vector<int> scenarios = result["scenarios"].as<std::vector<int>>();
   bool perunit = result["unit"].as<bool>();
   double tolerance = result["tolerance"].as<double>();
   double scale = result["scale"].as<double>();
@@ -71,7 +70,14 @@ int main(int argc, char **argv) {
   rshc::Model model;
   model.load_case(case_file, perunit);
   model.load_der(der_file);
-  model.load_scenarios(load_file, pv_file, scenarios, randomize);
+  model.load_scenarios(load_file, pv_file, 0, false);
+
+  // Get subset of scenarios (assuming number is small)
+  std::vector<rshc::Scenario> scenario_set = std::vector<rshc::Scenario>();
+  for (int k : scenarios) {
+    scenario_set.push_back(model.scenarios[k]);
+  }
+  model.scenarios = scenario_set;
 
   model.nu = nu;
   model.gamma = gamma;

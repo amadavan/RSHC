@@ -116,7 +116,7 @@ rshc::det::MosekDeterministic::MosekDeterministic(const Model &model,
 
     vars_k.P_ = model_->variable(n_l_, Domain::unbounded());
     vars_k.Q_ = model_->variable(n_l_, Domain::unbounded());
-    vars_k.w_ = model_->varable(n_b_, Domain::inRange(w_min, w_max));
+    vars_k.w_ = model_->variable(n_b_, Domain::inRange(w_min, w_max));
     vars_k.l_ = model_->variable(n_l_, Domain::greaterThan(0.));
 
     k_vars_.emplace_back(vars_k);
@@ -158,24 +158,9 @@ rshc::det::MosekDeterministic::MosekDeterministic(const Model &model,
     cons_k.flow_ =
         model_->constraint(Expr::hstack(flow_p), Domain::inRotatedQCone());
 
-    cons_k.v_l_ = model_->constraint(
-        Expr::add(vars_k.w_->slice(0, n_b_ - 1),
-                  Expr::add(w_l_, t_l_->slice(
-                                      monty::new_array_ptr<int, 1>({0, (int)k}),
-                                      monty::new_array_ptr<int, 1>(
-                                          {(int)n_l_, (int)k + 1})))),
-        Domain::greaterThan(0.));
-    cons_k.v_u_ = model_->constraint(
-        Expr::sub(vars_k.w_->slice(0, n_b_ - 1),
-                  Expr::add(w_u_, t_u_->slice(
-                                      monty::new_array_ptr<int, 1>({0, (int)k}),
-                                      monty::new_array_ptr<int, 1>(
-                                          {(int)n_l_, (int)k + 1})))),
-        Domain::lessThan(0.));
-
     std::shared_ptr<monty::ndarray<Expression::t, 1>> f_p =
         monty::new_array_ptr<Expression::t, 1>(
-            {Expr::constTerm(n_l_, 0.5), s_lim, vars_k.P_, vars_k.Q_});
+            {(std::shared_ptr<monty::ndarray<Expression::t, 1>>) Expr::constTerm(n_l_, 0.5), s_lim, vars_k.P_, vars_k.Q_});
     cons_k.f_ = model_->constraint(Expr::hstack(f_p), Domain::inRotatedQCone());
 
     k_cons_.emplace_back(cons_k);
