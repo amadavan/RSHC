@@ -72,6 +72,32 @@ cc_binary(
 )
 
 cc_binary(
+    name = "deterministic",
+    srcs = [
+        "src/deterministic/deterministic.cpp",
+        "src/deterministic/mosek_deterministic.cpp",
+        "src/model.cpp",
+    ] + if_gurobi([]),
+    includes = ["include"],
+    data = DATA_FILES,
+    defines = if_gurobi(["ENABLE_GUROBI"])+ select({
+        "no_fs": [],
+        "//conditions:default": ["ENABLE_FS"],
+    }),
+    linkstatic = True,
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_tools//tools/cpp/runfiles",
+        "@cxxopts//:cxxopts",
+        "@eigen//:eigen",
+        "@rshc//third_party/mosek:fusion_cxx",
+    ] + gurobi_deps() + select({
+        "no_fs": ["@phasor-nofs//:phasor"],
+        "//conditions:default": ["@phasor//:phasor"],
+    }),
+)
+
+cc_binary(
     name = "acceptability",
     srcs = [
         "src/acceptability/acceptability.cpp",
@@ -132,6 +158,7 @@ compilation_database(
     output_base = OUTPUT_BASE,
     targets = [
         "//:optimality",
+        "//:deterministic",
         "//:acceptability",
         "//:evaluation",
     ],
