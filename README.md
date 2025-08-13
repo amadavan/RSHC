@@ -57,7 +57,7 @@ The available options for the acceptability code are:
 | u, unit | Convert the line parameters to per-unit |
 | f, file | File containing DER capacities to evaluate |
 
-An example of the acceptability test on a 3-bus power network is shown below.
+An example of the acceptability test on a 3-bus power network is shown below. The evaluated points are shown with open circles, while the solid circles represent points that were identified as unacceptable without solving feasibility explicitly. This demonstrates the efficiency of this approach to solve the acceptability problem.
 
 https://user-images.githubusercontent.com/4148233/163688222-7af3af99-1379-4558-9328-42ef44cd560b.mp4
 
